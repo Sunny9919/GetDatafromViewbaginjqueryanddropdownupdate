@@ -1,0 +1,162 @@
+using Intellect.Unite.CaptureTools.Model;
+using log4net;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Reporting.Map.WebForms.BingMaps;
+using System.Collections.Generic;
+using System;
+using System.Threading;
+using WebCaptureToolsOpenSrcClient;
+using System.Linq;
+using System.Text.Json;
+using Microsoft.ReportingServices.ReportProcessing.ReportObjectModel;
+
+namespace UniteCaptureToolUI.Areas.Configuration.Controllers
+{
+    public class LagecyDataSignOffController : Controller
+    {
+        UniteCaptureToolUI.Services.GenericService service = new UniteCaptureToolUI.Services.GenericService();
+        ILog log = LogManager.GetLogger(typeof(LagecyDataSignOffController));
+        public LagecyDataSignOffController(IWebHostEnvironment webHostEnvironmen)
+        {
+            string culture = "";
+            if (HttpContext != null)
+            {
+                if (HttpContext.Session.GetString("culture") == null)
+                {
+                    culture = "en-GB";
+                }
+                else
+                {
+                    culture = (string)HttpContext.Session.GetString("culture");
+                }
+            }
+            Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo(culture);
+            Thread.CurrentThread.CurrentUICulture = Thread.CurrentThread.CurrentCulture;
+            var v = new System.Globalization.DateTimeFormatInfo();
+            v.ShortDatePattern = "dd/MM/yyyy";
+            Thread.CurrentThread.CurrentUICulture.DateTimeFormat = v;     
+        }
+
+        [HttpGet]
+        public IActionResult LagecyDataSignOff()
+         {
+            UserCredentials users = new UserCredentials();
+            string culture = (string)HttpContext.Session.GetString("culture");
+            if (culture != null)
+            {
+                Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo(culture);
+                Thread.CurrentThread.CurrentUICulture = Thread.CurrentThread.CurrentCulture;
+            }
+            if (culture != null)
+            {
+                Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo(culture);
+                Thread.CurrentThread.CurrentUICulture = Thread.CurrentThread.CurrentCulture;
+            }
+            if (HttpContext.Session.GetSessionData<UserCredentials>("UserCredentials") == null)
+            {
+                return RedirectToAction("Login", "Home", new { area = "" });
+            }
+            else
+            {
+                try
+                {
+                    users = HttpContext.Session.GetSessionData<UserCredentials>("UserCredentials");
+                    PacsDetails details = service.GetPacsDetails(culture, users.PacsID);
+                    LegacyDataSignOff objdccb = new LegacyDataSignOff();
+                    IList<LegacyDataSignOff> Dccbdetails = service.GetDetailsbyDistrict(users.DCCBBrID, users.StateID);
+                    objdccb = Dccbdetails.SingleOrDefault();
+                    ViewBag.dccbname = objdccb.DCCBName;
+                    ViewBag.StateName = details.StateName;
+                    LegacyDataSignOff obj = new LegacyDataSignOff();
+                    LegacyDataMethods subjobj = new LegacyDataMethods();
+                    subjobj.GetDccbbr = true;
+                    obj.LegacyDataMethods = subjobj;
+                    IList<LegacyDataSignOff> list = new List<LegacyDataSignOff>();
+                    list = service.GetData(obj);
+                    List<LegacyDataSignOff> Dropdown = list.Where(item => item.PacsId == 0 || item.PacsId == null)
+                                          .OrderBy(item => item.LegacyDataMethods.DCCBBrName)
+                                          .ToList();
+                    Dropdown = Dropdown.Where(item => item.DCCBCode == objdccb.DCCBCode)
+                                          .OrderBy(item => item.LegacyDataMethods.DCCBBrName)
+                                          .ToList();
+                    List<LegacyDataSignOff> Grid = list.Where(item => item.PacsId != 0)
+                                          .OrderBy(item => item.PacsName).ToList();
+                    Grid = Grid.Select(legacydata => new LegacyDataSignOff
+                    {
+                        PacsId = legacydata.PacsId,
+                        PacsName = legacydata.PacsName,
+                        GovtPacsID = legacydata.GovtPacsID,
+                        DCCBBrID = legacydata.DCCBBrID,
+                        DCCBBrName = legacydata.DCCBBrName,
+                        UserName = legacydata.UserName,
+
+                    }).ToList();
+                    ViewBag.Grid = JsonSerializer.Serialize(Grid);
+
+                    Dropdown = Dropdown.Select(legacydata => new LegacyDataSignOff
+                    {
+                        DCCBCode = legacydata.DCCBCode,
+                        DCCBBrID = legacydata.LegacyDataMethods.DCCBBrID,
+                        DCCBBrName = legacydata.LegacyDataMethods.DCCBBrName,
+
+
+                    }).ToList();
+                    ViewBag.Dropdown = JsonSerializer.Serialize(Dropdown);
+
+                    SelectList SelectList = new SelectList(Dropdown, "DCCBBrID", "DCCBBrName");
+                    ViewBag.Dccbbr = SelectList;
+                    return View();
+                }
+
+                catch (Exception ex)
+                {
+                    log.Error("Leaving LagecyDataSignOff  - Error : " + ex.Message);
+                    return RedirectToAction("Login", "Home", new { area = "" });
+                }
+            }
+        }
+
+        [HttpPost]
+        public JsonResult VerifyDetails(string jsonData, int DccbSelect)
+        {
+            try
+            {
+                bool result;
+                string culture = (string)HttpContext.Session.GetString("culture");
+                if (culture == null)
+                {
+                    culture = "en-GB";
+                }
+                UserCredentials user = HttpContext.Session.GetSessionData<UserCredentials>("UserCredentials");
+                List<string> myList = JsonSerializer.Deserialize<List<string>>(jsonData);
+                IList<LegacyDataSignOff> List = new List<LegacyDataSignOff>();
+
+                foreach (var item in myList)
+                {
+                    LegacyDataSignOff obj = new LegacyDataSignOff();
+                    obj.DCCBBrID = DccbSelect;
+                    obj.PacsId = Convert.ToInt64(item); ;
+                    List.Add(obj);
+            }
+                bool response = service.PostData(List);
+                if (response)
+                {
+                    return Json(true);
+                }
+                else { return Json(false); }
+            }
+
+          
+
+
+            catch (Exception ex)
+            {
+                log.Error("Leaving VerifyDetails  - Error : " + ex.Message);
+                return Json(false);
+            }
+        }
+    }
+}
