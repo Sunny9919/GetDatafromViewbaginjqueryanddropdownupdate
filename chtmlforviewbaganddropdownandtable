@@ -1,0 +1,229 @@
+@using MyResources;
+@model Intellect.Unite.CaptureTools.Model.LegacyDataSignOff
+@{
+    ViewData["Title"] = "Lagecy Data SignOff";
+    Layout = "~/Views/Shared/_dccbbranchlayout.cshtml";
+
+}
+<div class="col-12 border" style="padding:1.5rem;">
+    @using (Html.BeginForm())
+    {
+        <div class="row mt-3 mb-3" style="padding:1.5rem;">
+          @*  <div class="row mt-3 mb-3">
+                <div class="col-sm-3">
+                    <h7>@ResModulesLables.StateName &nbsp;: &nbsp; @ViewBag.StateName </h7>
+                </div>
+                <div class="col-sm-3">
+                    <h7>@ResModulesLables.lblDCBDetails &nbsp;: &nbsp;@ViewBag.dccbname </h7>
+                </div>
+            </div>*@
+            <br />
+           
+                <div class="row">
+               @* <div class="col-lg-5" style=" display: flex;">
+                    <label style="font-size: 15px;font-weight:500"> @ResModulesLables.lblDCBDetails &nbsp;&nbsp;</label>
+                    <div style=" display: flex;">
+                    @Html.DropDownListFor(Model => Model.DCCBCode,  ViewBag.dccb as SelectList, ResModulesLables.lblSelect, new { @class = "form-control input-xs appywidthstyle",id = "Select"})
+                     </div>
+                </div>*@
+                <div class="col-lg-3" style=" display: flex;">
+                    <label style="font-size: 15px;font-weight:500"> @ResModulesLables.lblDCCBBRANCH &nbsp;&nbsp;</label>
+                    <div style=" display: flex;">
+                   @Html.DropDownListFor(Model => Model.DCCBBrID, ViewBag.Dccbbr as SelectList, ResModulesLables.lblSelect, new { @class = "form-control input-xs appywidthstyle",id = "DccbSelect"})
+                </div>
+                </div>
+
+                <div class="col-lg-1" >
+                    <button type="button" id="viewDataButton" class="btn btn-primary">@ResModulesLables.lblView</button>
+              
+            </div>
+               </div>
+            <br />
+            <br />
+
+        <div class="col-12">
+                <table id="Table" class="table grid table-bordered table-hover ">
+                    <thead class="bg-light">
+                        <tr>
+                        <th style="width: 15rem; text-align:center">Select</th>
+                        <th hidden>PacsID</th>
+                            <th style="width: 30rem;">@ResModulesLables.lblPacsName</th>
+                            <th style="width: 25rem;">@ResModulesLables.GovPacsID</th>
+                            <th style="width: 30rem;">@ResModulesLables.lblUserName</th>
+                          
+                          
+                        </tr>
+                    </thead>
+                    <tbody>                    
+                    </tbody>
+                </table>
+                 @*<span style="font-size: 16px;font-weight:500"> Row Count :</span>
+                 <input disabled value="0" style="border: none;" type="text" id="rowcount" />*@
+
+            </div>
+           
+
+        </div>
+
+        <div class="pull-right">
+            <button type="button" id="btnVerify" style="margin-top: 50px;" class="btn btn-primary ">@ResModulesLables.EnableSignOff &nbsp;&nbsp;<i class="fa fa-thumbs-up pr-1"></i></button>
+
+        </div>
+        
+
+       
+    }
+
+</div>
+
+
+ <script>
+
+
+    $(document).ready(function () {
+        $("#btnVerify").hide();
+        
+    });
+   
+
+    $('#Select').change(function () {
+        debugger;
+        var Selecteddccb = $('#Select').val();
+        var myArrayData = @Html.Raw(ViewBag.Dropdown);
+        var filteredItems = [];
+
+        if (myArrayData) {
+            debugger;
+            for (var i = 0; i < myArrayData.length; i++) {
+                if (myArrayData[i].DCCBCode == Selecteddccb) {
+                    filteredItems.push(myArrayData[i]);
+                }
+            }
+        }
+        else {
+            console.log("ViewBag.Dropdown is undefined or null.");
+        }
+        console.log(filteredItems);
+        debugger;
+        var table = $("#Table tbody");
+        table.empty();
+        $('#DccbSelect').prop('disabled', false);
+        $('#DccbSelect').show();
+        $("#DccbSelect option").remove();
+        $('<option/>').val(0).html('--Select--').appendTo('#DccbSelect');
+        for (var i = 0; i < filteredItems.length; i++) {
+            $("#DccbSelect").append("<option value=" + filteredItems[i].DCCBBrID + ">" + filteredItems[i].DCCBBrName + "</option>");
+        }
+    });
+
+
+    $("#viewDataButton").click(function () {
+        debugger;
+        var DccbSelect = $("#DccbSelect").val();
+        var myArrayData = @Html.Raw(ViewBag.Grid);
+        var filteredItems = [];
+          if (myArrayData) {
+            debugger;
+            for (var i = 0; i < myArrayData.length; i++) {
+                if (myArrayData[i].DCCBBrID == DccbSelect) {
+                    filteredItems.push(myArrayData[i]);
+                }
+            }
+        }
+        else {
+            console.log("ViewBag.product or ViewBag.product.Items is undefined or null.");
+        }
+                var table = $("#Table tbody");
+                table.show();
+                table.empty(); // Clear existing rows
+                $("#btnVerify").show();
+                debugger;
+                $('#Table').dataTable({
+                    "destroy": true,
+                    "data": filteredItems,
+                    'columns': [
+                        {
+                            "data": null,
+                            "text-align": "center",
+                            "className": "text-center",
+                            "render": function (data, type, row) {
+                                return '<td style="width:200px !important; text-align: center;"><input type="checkbox" class="approvedcheckbox"/></td>';
+                            }
+                        },
+
+                        {
+                            'data': 'PacsId',
+                            'className': 'clsPacs hidden',
+                            //'visible': false,
+
+                        }, 
+                        {
+                            'data': 'PacsName',
+                            'className': 'clspacsname',
+
+                        },
+                        { 'data': 'GovtPacsID' ,
+                          'className': 'clsgovpacs',
+                        },
+                        {
+                          'data': 'UserName',
+                         
+                        }
+
+                    ],
+                    "autoWidth": false,
+                    "info": false,
+                    "paging": true,
+                    "searching": true,
+                    "fixedHeader": false,
+                    "scrollCollapse": true,
+
+        })
+    
+    });
+
+
+    $('#btnVerify').click(function () {
+        debugger;
+        var list = [];
+        var DccbSelect = $("#DccbSelect").val();
+
+       
+        $('#Table tbody tr').each(function () {
+            debugger;
+            var IsSelect = $(this).find('input[type="checkbox"]').is(':checked');
+            if (IsSelect) {
+                debugger;
+                var pacid = $(this).find('td.clsPacs').text();
+                list.push(pacid);
+            }
+        });
+
+                if (list.length > 0) {
+                    debugger;
+                  var jsonData = JSON.stringify(list);
+                    
+                    debugger;
+
+
+                    debugger;
+                    $.ajax
+                        ({
+                            url: '@Url.Action("VerifyDetails", "LagecyDataSignOff")',
+                            type: 'POST',
+                            data: { jsonData: jsonData, DccbSelect: DccbSelect },
+
+                            success: function (response) {
+                                debugger;
+                                swal({
+                            title: '@MyResources.ResModulesLables.SignOffEnabledSuccessfully'
+                                }, function (isConfirm) {
+                                    if (isConfirm) { window.location.reload(); }
+                                });
+                            }
+                        });
+
+                }
+      
+    });
+</script>
