@@ -50,6 +50,7 @@
                             <th style="width: 30rem;">@ResModulesLables.lblPacsName</th>
                             <th style="width: 25rem;">@ResModulesLables.GovPacsID</th>
                             <th style="width: 30rem;">@ResModulesLables.lblUserName</th>
+                            <th style="width: 30rem;">@ResModulesLables.lblViewPdf</th>
                           
                           
                         </tr>
@@ -167,8 +168,15 @@
                         },
                         {
                           'data': 'UserName',
-                         
-                        }
+
+                },
+                {
+                    'data': 'IsView',
+                    'render': function (data) {
+                        return '<button type="button" class="view-pdf-btn"  id="btnViewDetails" style="width:174px;height:32px"><i class="fa fa-eye"></i> @ResModulesLables.lblViewPdf</button>'
+                    }
+
+                } 
 
                     ],
                     "autoWidth": false,
@@ -226,4 +234,17 @@
                 }
       
     });
+
+
+    function viewPDF(pacid) {
+        debugger;
+        var pdfUrl = '/LagecyDataSignOff/ViewPDF?pacid=' + pacid;
+        window.open(pdfUrl, '_blank');
+    }
+
+    $("#Table").on("click", ".view-pdf-btn", function () {
+        var pacid = $(this).closest("tr").find("td.clsPacs").text();
+        viewPDF(pacid);
+    });
+
 </script>
