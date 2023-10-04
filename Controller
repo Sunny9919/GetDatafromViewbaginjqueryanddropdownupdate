@@ -158,5 +158,16 @@ namespace UniteCaptureToolUI.Areas.Configuration.Controllers
                 return Json(false);
             }
         }
+
+  public IActionResult ViewPDF(long pacid)
+        {
+            string uploadsFolder = Path.Combine(rootPath, "wwwroot", "uploads", pacid+".pdf");
+            byte[] bytes = System.IO.File.ReadAllBytes(uploadsFolder);
+
+            return File(bytes, "application/pdf");
+
+               // return Ok();
+            
+        }
     }
 }
